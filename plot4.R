@@ -18,26 +18,31 @@ coal_only <- filter(merged_NEI, grepl("Coal",SCC.Level.Three))
 coal_only$SCC.Level.Three <- factor(coal_only$SCC.Level.Three)
 
 
-
+## Summarize by Year
 pm25_year <- 	coal_only %>% 
 				group_by(year) %>%  
 				summarise(total_pm25 = sum(Emissions,na.rm=TRUE))
 
+## Copy over the previous year value using lag()
 pm25_year$prev_yr_emissions <- lag(pm25_year$total_pm25,1,default=0)
 
+## Calculate YoY change comparing to previous year 
 pm25_year$YoY <- pm25_year$total_pm25 - pm25_year$prev_yr_emissions
 
+## Bucket the YoY as "increasing"/"decreasing" based on the change
 pm25_year$yoy_trend <- ifelse(pm25_year$YoY > 0, "increased", "decreased") 
 
 
 png("plot4.png",width=700)
 
+## Plot the total emissions
 g <- ggplot(pm25_year,aes(year,total_pm25))
 g <- g + geom_point(size=5)
 g <- g + geom_smooth(method="lm",linetype = 3,color="red")
 g <- g+ labs(title="Emission Trend 1999 to 2008",y="Total Emissions")
 
 
+## plot the YoY change
 g1 <- ggplot(pm25_year,aes(year,YoY,label=YoY))
 g1 <- g1 + geom_bar(stat='identity', aes(fill=yoy_trend), width=.5)  
 g1 <- g1+ scale_fill_manual(name="Change from Previous Year", 

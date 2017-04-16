@@ -13,9 +13,12 @@ merged_NEI <- merge (NEI, SCC)
 
 ## Get Onroad data points in Baltimore
 onroad_bmore <- merged_NEI %>% filter(Data.Category == "Onroad" & fips == "24510")
+
+## Get Onroad data points in LA County
 onroad_LA <- merged_NEI %>% filter(Data.Category == "Onroad" & fips == "06037")
 
 
+## Create a function that summarizes the data by "year" and adds the City name as a variable
 summarizedAndYoY <- function(theData,city){
 	pm25_year <- 	theData %>% 
 					group_by(year) %>%  
@@ -32,15 +35,17 @@ summarizedAndYoY <- function(theData,city){
 	return (pm25_year)
 }
 
+## Combine the results of summarizedAndYoY for Baltimore & LA data sets
 onroad_bmore_LA <- rbind(summarizedAndYoY(onroad_bmore),summarizedAndYoY(onroad_LA))
 
 png("plot6.png",width=700)
 
+## Plot Total Emissions faceted by City
 g <- ggplot(onroad_bmore_LA,aes(year,total_pm25))
-g <- g + geom_point() + facet_grid(. ~ city,scales="free_y", space = "free_y") + geom_smooth(method="lm",linetype = 3,color="red")
+g <- g + geom_point(size=5) + facet_grid(. ~ city) + geom_smooth(method="lm",linetype = 3,color="red",se=FALSE)
 g <- g+ labs(title="Onroad Emission Trend",y="Total Emissions")
 
-
+## Plot YoY change faceted by City
 g1 <- ggplot(onroad_bmore_LA,aes(year,YoY,label=YoY))
 g1 <- g1 + facet_grid(. ~ city) 
 g1 <- g1 + geom_bar(stat='identity', aes(fill=yoy_trend), width=.5)  
@@ -49,7 +54,7 @@ g1 <- g1+ scale_fill_manual(name="Change from Previous Year",
                             labels = c("Increased", "Decreased"), 
                             values = c("decreased"="#00ba38", "increased"="#f8766d")) 
 
-g1 <- g1+ labs(title="Onroad Emission Trend YoY",y="Change from previos year")
+g1 <- g1+ labs(title="Onroad Emission Trend YoY",y="Change from previous year")
 
 
 g1 <- g1 + theme(legend.position = c(0.90, 0.78))
